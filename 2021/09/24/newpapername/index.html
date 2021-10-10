@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>空白asの博客 || newpapername</title>
+    <title>空白asの博客 || webpack配置相关</title>
     <meta name="author" content="karrywang">
     <meta name="description" content="随心所欲 ">
     <meta name="keywords" content=" ">
@@ -154,7 +154,7 @@
 <link rel="stylesheet" href="/css/post-body.css">
 <div class="article">
     <div>
-        <h1>newpapername </h1>
+        <h1>webpack配置相关 </h1>
     </div>
     <div class="info">
         <span class="date">
@@ -170,7 +170,165 @@
     </div>
 
     <div class="content" v-pre>
-        
+        <h1 id="webpack安装"><a href="#webpack安装" class="headerlink" title="webpack安装"></a>webpack安装</h1><ul>
+<li>首先先查看node版本<br><code>npm -v</code></li>
+<li>全局安装webpack(这里我先指定版本号3.6.0，因为vue cli2依赖该版本)<br><code>npm install webpack@3.6.0 -g</code></li>
+<li>局部安装webpack（后续才需要） –save-dev是开发时依赖，项目打包后不需要继续使用的。<br><code>npm install webpack@3.6.0 --save-dev</code></li>
+<li>为什么全局安装后，还需要局部安装呢？</li>
+</ul>
+<p>  1)在终端直接执行webpack命令，使用的全局安装的webpack<br>  2)当在package.json中定义了scripts时，其中包含了webpack命令，那么使用的是局部webpack</p>
+<h3 id="打包JS"><a href="#打包JS" class="headerlink" title="打包JS"></a>打包JS</h3><ul>
+<li>创建一个webpack.config.js文件<pre><code class="bash">const path = require(&#39;path&#39;)
+module.exports = &#123;
+&lt;!--  入口 --&gt;
+entry: &#39;./src/main.js&#39;,
+&lt;!-- 出口，通常是一个对象，至少包含两种属性，path和filename --&gt;
+output: &#123;
+path: path.resolve(__dirname, &#39;dist&#39;),
+filename: &#39;bundle.js&#39;
+&#125;
+</code></pre>
+<h3 id="局部安装webpack"><a href="#局部安装webpack" class="headerlink" title="局部安装webpack"></a>局部安装webpack</h3></li>
+<li>先初始化<br><code>npm init</code></li>
+<li>安装局部的webpack3.6.0<br><code>npm install webpack@3.6.0 --save-dev</code></li>
+<li>在package.json的scripts中定义自己的执行脚本。添加”build”: “webpack”<br><code>npm run build</code><h3 id="css-loader"><a href="#css-loader" class="headerlink" title="css-loader"></a>css-loader</h3></li>
+<li>安装css-loader<br><code>npm install --save-dev css-loader@2.0.2</code></li>
+<li>安装style-loader<br><code>npm install --save-dev style-loader@0.23.1</code></li>
+<li>按照官方配置webpack.config.js文件<br>在module.export中添加module,由于css-loader并不负责将css具体样式嵌入到文档中，所以还需要添加style-loader</li>
+</ul>
+<pre><code class="bash">module: &#123;
+  rules: [
+    &#123;
+      test: /\.css$/i,
+       &lt;!-- css-loader只负责将css文件进行加载 --&gt;
+       &lt;!-- style-loader负责将样式添加到DOM中 --&gt;
+       &lt;!-- 使用多个loader时，是从右向左读 --&gt;
+      use: [&#39;style-loader&#39;, &quot;css-loader&quot;],
+    &#125;
+  ]
+  &#125;
+</code></pre>
+<h3 id="less-loader"><a href="#less-loader" class="headerlink" title="less-loader"></a>less-loader</h3><ul>
+<li><p>首先，还是需要安装对应的loader,因为webpack会使用less对less文件进行编译<br><code>npm install --save-dev less-loader@4.0.1 less@3.9.0</code></p>
+</li>
+<li><p>其次，修改对应的配置文件,添加一个rules选项，用于处理.less文件</p>
+<pre><code class="bash">  &#123;
+    test: /\.less$/i,
+    loader: [
+      #  compiles Less to CSS
+      &quot;style-loader&quot;,
+      &quot;css-loader&quot;,
+      &quot;less-loader&quot;,
+    ],
+  &#125;,
+</code></pre>
+<h3 id="图片文件处理"><a href="#图片文件处理" class="headerlink" title="图片文件处理"></a>图片文件处理</h3></li>
+<li><p>一张小于8kb的照片，一张大于8kb的照片</p>
+</li>
+<li><p>图片处理，我们使用url-loader来处理，依然先安装url-loader<br><code>npm install --save-dev url-loader@1.1.2</code></p>
+</li>
+<li><p>修改webpack.config.js配置文件：</p>
+<pre><code class="bash">&#123;
+    test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+    use:[
+       &#123;
+    loader: &#39;url-loader&#39;,
+    options: &#123;
+        limit: 8000,
+        name: &#39;img/[name].[hash:8].[ext]&#39;
+     &#125;,
+    &#125;
+  ]
+&#125;
+</code></pre>
+</li>
+<li><p>再次打包，运行index.html，就会发现我们的背景图片选出了出来。是通过base64显示出来的</p>
+</li>
+<li><p>如果图片大于8kb，会通过file-loader进行处理，但是我们的项目中并没有file-loader，所以，我们需要安装file-loader<br><code>npm install --save-dev file-loader@3.0.1</code><br>webpack会自动帮助我们生成一个非常长的名字，但是，我们整个程序是打包在dist文件夹下的，所以这里我们需要在路径publicPath下再添加一个dist/</p>
+<h3 id="ES6语法处理"><a href="#ES6语法处理" class="headerlink" title="ES6语法处理"></a>ES6语法处理</h3></li>
+<li><p>ES6的语法转成ES5，那么就需要使用babel。<br><code>npm install --save-dev babel-loader@7 babel-core babel-preset-es2015</code></p>
+</li>
+<li><p>配置webpack.config.js文件</p>
+<pre><code class="bash">  &#123;
+    test: /\.m?js$/,
+    exclude: /(node_modules|bower_components)/,
+    use: &#123;
+      loader: &#39;babel-loader&#39;,
+      options: &#123;
+        presets: [&#39;es2015&#39;]
+      &#125;
+    &#125;
+  &#125;
+</code></pre>
+</li>
+<li><p>重新打包，查看bundle.js文件，发现其中的内容变成了ES5的语法</p>
+<h3 id="引入vue-js"><a href="#引入vue-js" class="headerlink" title="引入vue.js"></a>引入vue.js</h3></li>
+<li><p>webpack环境中集成Vuejs,因为是在实际项目中也会使用vue的，所以并不是开发时依赖<br><code>npm install vue --save</code></p>
+</li>
+<li><p>会报错说的是我们使用的是runtime-only版本的Vue<br>修改webpack的配置，添加如下内容即可</p>
+<pre><code class="bash">  resolve: &#123;
+alias: &#123;
+  &#39;vue$&#39;: &#39;vue/dist/vue.esm.js&#39; //内部为正则表达式  vue结尾的
+&#125;
+&#125;
+</code></pre>
+<h1 id="vue文件封装处理"><a href="#vue文件封装处理" class="headerlink" title=".vue文件封装处理"></a>.vue文件封装处理</h1></li>
+<li><p>安装vue-loader和vue-template-compiler<br><code>npm install vue-loader vue-template-compiler --save-dev</code></p>
+</li>
+<li><p>修改webpack.config.js的配置文件：</p>
+<pre><code class="bash">  &#123;
+    test: /\.vue$/,
+    use: [&#39;vue-loader&#39;]
+  &#125;
+</code></pre>
+<h3 id="plugin"><a href="#plugin" class="headerlink" title="plugin"></a>plugin</h3></li>
+<li><p>打包html的plugin<br>我们知道，在真实发布项目时，发布的是dist文件夹中的内容，但是dist文件夹中如果没有index.html文件，那么打包的js等文件也就没有意义了。所以，我们需要将index.html文件打包到dist文件夹中，这个时候就可以使用HtmlWebpackPlugin插件</p>
+</li>
+<li><p>安装HtmlWebpackPlugin插件<br><code>npm install html-webpack-plugin@3.2.0 --save-dev</code></p>
+</li>
+<li><p>使用插件，修改webpack.config.js文件中plugins部分的内容如下：</p>
+<pre><code class="bash">const webpack = require(&#39;webppack&#39;)
+const HtmlWebpackPlugin = require(&#39;html-webpack-plugin&#39;)
+
+plugins: [
+  &lt;!--插件名字叫BannerPlugin，属于webpack自带的插件,为打包的文件添加版权声明  --&gt;
+new webpack.BannerPlugin(&#39;最终版权归karry所有&#39;),
+new HtmlWebpackPlugin(&#123;
+  template: &#39;index.html&#39;
+&#125;),
+]
+</code></pre>
+</li>
+<li><p>在项目发布之前，我们必然需要对js等文件进行压缩处理</p>
+</li>
+<li><p>使用一个第三方的插件uglifyjs-webpack-plugin，并且版本号指定1.1.1，和CLI2保持一致<br><code>npm install uglifyjs-webpack-plugin@1.1.1 --save-dev</code></p>
+</li>
+<li><p>修改webpack.config.js文件，使用插件：</p>
+<pre><code class="bash">const UglifyjsWebpackPlugin = require(&#39;uglifyjs-webpack-plugin&#39;)
+```bash
+module.exports = &#123;
+...
+plugins: [
+new webpack.BannerPlugin(&#39;最终版权归karry所有&#39;),
+new UglifyjsWebpackPlugin()
+],
+</code></pre>
+<h3 id="搭建本地服务器"><a href="#搭建本地服务器" class="headerlink" title="搭建本地服务器"></a>搭建本地服务器</h3></li>
+<li><p>webpack提供了一个可选的本地开发服务器，这个本地服务器基于node.js搭建，内部使用express框架，可以实现我们想要的让浏览器自动刷新显示我们修改后的结果。</p>
+</li>
+<li><p>不过它是一个单独的模块，在webpack中使用之前需要先安装它<br><code>npm install --save-dev webpack-dev-server@2.9.1</code></p>
+</li>
+<li><p>devserver也是作为webpack中的一个选项，选项本身可以设置如下属性：</p>
+<pre><code class="bash">devServer: &#123;
+contentBase: &#39;./dist&#39;,
+inline: true
+&#125;
+</code></pre>
+</li>
+<li><p>可以再配置另外一个scripts：<br><code>&quot;dev&quot;: &quot;webpack-dev-server --open&quot;</code></p>
+</li>
+</ul>
+
     </div>
 
     
